@@ -1,4 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TidyTask - Family Task Management App
+
+TidyTask is a family-focused task management web application that allows household members to collaboratively manage and complete tasks. The application is designed to be fast, functional, beautiful, and responsive with a delightful user experience for both mobile and desktop.
+
+## Features
+
+- **Task Management**: Create, edit, delete tasks with priorities and deadlines
+- **Subtasks**: Add and manage subtasks with progress tracking
+- **Family Collaboration**: Assign tasks to family members with custom color themes
+- **Kanban-style Board**: Today, Upcoming, Completed, and Overdue sections
+- **Responsive Design**: Optimized for both mobile and desktop
+- **Dark/Light Mode**: Toggle between themes
+- **Beautiful Animations**: Powered by Framer Motion
+
+## Tech Stack
+
+- **Frontend**: Next.js, TypeScript, TailwindCSS
+- **UI Components**: shadcn/ui
+- **Animations**: Framer Motion
+- **State Management**: Zustand
+- **Deployment**: Vercel
 
 ## Getting Started
 
