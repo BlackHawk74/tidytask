@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Plus } from "lucide-react"
+import { Plus, LogOut } from "lucide-react"
+import Link from "next/link"
 import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -100,6 +101,16 @@ export function HeaderBar() {
                     )}
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/50"
+                  asChild
+                >
+                  <Link href="/" className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
