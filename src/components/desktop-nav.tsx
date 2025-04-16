@@ -97,7 +97,6 @@ export function DesktopNav() {
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/app" },
     { icon: Bell, label: "Notifications", href: "/app/notifications" },
-    { icon: User, label: "Profile", href: "/app/profile" },
     { icon: Calendar, label: "Calendar", href: "/app/calendar" },
   ]
   
@@ -179,7 +178,7 @@ export function DesktopNav() {
               onClick={() => selectFamilyMember(null)}
             >
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="bg-blueprint-primary text-white">
+                <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                   All
                 </AvatarFallback>
               </Avatar>
@@ -226,6 +225,28 @@ export function DesktopNav() {
             ))}
             
             <div className="pt-4 mt-4 border-t">
+              <Link href="/app/profile">
+                <Button 
+                  variant="ghost" 
+                  className={cn(
+                    "w-full justify-start mb-2",
+                    expanded ? "px-3" : "px-0 justify-center",
+                    pathname === "/app/profile" && "bg-accent/50"
+                  )}
+                >
+                  <User className="h-5 w-5" />
+                  {expanded && (
+                    <motion.span 
+                      className="ml-3"
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      Profile
+                    </motion.span>
+                  )}
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 className={cn(

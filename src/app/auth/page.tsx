@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowRight, Check, CheckCircle2, Circle, Pencil, Bell, User, Calendar } from "lucide-react"
+import { LoadingScreen } from "@/components/loading-animation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -461,13 +462,22 @@ export default function AuthPage() {
     
     // Simulate loading
     setTimeout(() => {
-      setIsLoading(false)
-      router.push("/app")
+      // Keep loading true, the LoadingScreen will handle navigation
     }, 1500)
   }
   
   return (
     <div className="container relative flex min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <AnimatePresence>
+        {isLoading && (
+          <LoadingScreen 
+            onComplete={() => {
+              router.push("/app")
+            }} 
+            delay={0.2}
+          />
+        )}
+      </AnimatePresence>
       {/* TidyTask Logo */}
       <motion.div 
         className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20 lg:left-6 lg:translate-x-0"
@@ -524,10 +534,16 @@ export default function AuthPage() {
           </div>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Sign Up</TabsTrigger>
+              <TabsTrigger value="login" className="transition-all duration-300 ease-in-out">Login</TabsTrigger>
+              <TabsTrigger value="register" className="transition-all duration-300 ease-in-out">Sign Up</TabsTrigger>
             </TabsList>
-            <TabsContent value="login">
+            <TabsContent value="login" className="transition-all duration-300 ease-in-out">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
               <Card>
                 <CardHeader>
                   <CardTitle>Login</CardTitle>
@@ -536,7 +552,7 @@ export default function AuthPage() {
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleAuth}>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input id="email" type="email" placeholder="name@example.com" required />
@@ -546,7 +562,7 @@ export default function AuthPage() {
                       <Input id="password" type="password" required />
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="pt-4">
                     <Button className="w-full" type="submit" disabled={isLoading}>
                       {isLoading ? (
                         <motion.div
@@ -560,8 +576,15 @@ export default function AuthPage() {
                   </CardFooter>
                 </form>
               </Card>
+              </motion.div>
             </TabsContent>
-            <TabsContent value="register">
+            <TabsContent value="register" className="transition-all duration-300 ease-in-out">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
               <Card>
                 <CardHeader>
                   <CardTitle>Create an account</CardTitle>
@@ -570,7 +593,7 @@ export default function AuthPage() {
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleAuth}>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
                       <Input id="name" placeholder="John Doe" required />
@@ -597,7 +620,7 @@ export default function AuthPage() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="pt-4">
                     <Button className="w-full" type="submit" disabled={isLoading}>
                       {isLoading ? (
                         <motion.div
@@ -611,6 +634,7 @@ export default function AuthPage() {
                   </CardFooter>
                 </form>
               </Card>
+              </motion.div>
             </TabsContent>
           </Tabs>
           <p className="px-8 text-center text-sm text-muted-foreground">

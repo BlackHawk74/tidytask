@@ -14,9 +14,11 @@ import { TaskModal } from "@/components/task-modal"
 
 interface TaskCardProps {
   task: Task
+  isCalendarView?: boolean
+  isDragging?: boolean
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({ task, isCalendarView = false, isDragging = false }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { familyMembers, completeTask } = useStore()
@@ -30,10 +32,10 @@ export function TaskCard({ task }: TaskCardProps) {
         layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9 }}
+        exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.2 }}
         whileHover={{ scale: 1.02 }}
-        className="w-full"
+        className={`group ${isDragging ? 'shadow-lg' : ''} w-full`}
       >
         <Card className={`overflow-hidden ${task.completed ? 'opacity-70' : ''}`}>
           <CardHeader className="p-4 pb-0">
@@ -57,7 +59,7 @@ export function TaskCard({ task }: TaskCardProps) {
           </CardHeader>
           
           <CardContent className="p-4 pt-3">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs mb-2">
               <span className={`rounded-full px-2 py-0.5 ${getPriorityColor(task.priority)}`}>
                 {task.priority}
               </span>
@@ -104,18 +106,20 @@ export function TaskCard({ task }: TaskCardProps) {
                 </Button>
               )}
               
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                onClick={() => setExpanded(!expanded)}
-              >
-                {expanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
+              {!isCalendarView && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => setExpanded(!expanded)}
+                >
+                  {expanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
           </CardFooter>
           

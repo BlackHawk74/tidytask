@@ -1,11 +1,11 @@
 "use client"
 
-import { TaskBoard } from "@/components/task-board"
+import { DraggableTaskBoard } from "@/components/draggable-task-board"
 
 export default function AppPage() {
   return (
     <div className="container mx-auto py-6">
-      <TaskBoard />
+      <DraggableTaskBoard />
     </div>
   )
 }

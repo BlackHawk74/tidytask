@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react"
 import { useStore } from "@/lib/store"
-import { Priority, Task } from "@/lib/types"
+import { Priority, Task, Subtask } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -54,6 +55,8 @@ export function TaskModal({
   const [priority, setPriority] = useState<Priority>("Medium")
   const [date, setDate] = useState<Date>(new Date())
   const [tempId, setTempId] = useState("")
+  const [tempSubtasks, setTempSubtasks] = useState<Subtask[]>([])
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("")
   
   // Reset form when modal opens/closes or mode changes
   useEffect(() => {
@@ -65,6 +68,7 @@ export function TaskModal({
         setPriority(task.priority)
         setDate(new Date(task.deadline))
         setTempId(task.id)
+        setTempSubtasks(task.subtasks || [])
       } else {
         // Default values for create mode
         setTitle("")
@@ -73,6 +77,7 @@ export function TaskModal({
         setPriority("Medium")
         setDate(new Date())
         setTempId("")
+        setTempSubtasks([])
       }
     }
   }, [open, mode, task, familyMembers])
@@ -95,7 +100,7 @@ export function TaskModal({
         assignee,
         priority,
         deadline: format(date, 'yyyy-MM-dd'),
-        subtasks: [],
+        subtasks: tempSubtasks,
         completed: false,
       })
     }
@@ -194,11 +199,113 @@ export function TaskModal({
             </Popover>
           </div>
           
-          {mode === "edit" && task && (
-            <div className="mt-2">
+          <div className="mt-2">
+            {mode === "edit" && task ? (
               <SubtaskList taskId={task.id} subtasks={task.subtasks} />
-            </div>
-          )}
+            ) : (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">Subtasks</h3>
+                
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a new subtask..."
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newSubtaskTitle.trim()) {
+                        const newSubtask = {
+                          id: `temp-${Date.now()}-${tempSubtasks.length}`,
+                          title: newSubtaskTitle.trim(),
+                          completed: false
+                        }
+                        setTempSubtasks([...tempSubtasks, newSubtask])
+                        setNewSubtaskTitle("")
+                      }
+                    }}
+                    className="h-9"
+                  />
+                  <Button 
+                    onClick={() => {
+                      if (newSubtaskTitle.trim()) {
+                        const newSubtask = {
+                          id: `temp-${Date.now()}-${tempSubtasks.length}`,
+                          title: newSubtaskTitle.trim(),
+                          completed: false
+                        }
+                        setTempSubtasks([...tempSubtasks, newSubtask])
+                        setNewSubtaskTitle("")
+                      }
+                    }} 
+                    size="sm" 
+                    variant="secondary"
+                    disabled={!newSubtaskTitle.trim()}
+                    className="h-9 px-3"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">Add subtask</span>
+                  </Button>
+                </div>
+                
+                <AnimatePresence>
+                  {tempSubtasks.length > 0 ? (
+                    <ul className="space-y-2">
+                      {tempSubtasks.map((subtask, index) => (
+                        <motion.li
+                          key={subtask.id}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-center gap-2 rounded-md border bg-card p-2"
+                        >
+                          <Checkbox
+                            id={`subtask-${subtask.id}`}
+                            checked={subtask.completed}
+                            onCheckedChange={(checked: boolean) => {
+                              const updatedSubtasks = [...tempSubtasks]
+                              updatedSubtasks[index] = {
+                                ...subtask,
+                                completed: checked
+                              }
+                              setTempSubtasks(updatedSubtasks)
+                            }}
+                          />
+                          <label
+                            htmlFor={`subtask-${subtask.id}`}
+                            className={`flex-1 text-sm ${
+                              subtask.completed ? "text-muted-foreground line-through" : ""
+                            }`}
+                          >
+                            {subtask.title}
+                          </label>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              const updatedSubtasks = tempSubtasks.filter((_, i) => i !== index)
+                              setTempSubtasks(updatedSubtasks)
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            <span className="sr-only">Delete subtask</span>
+                          </Button>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center text-sm text-muted-foreground"
+                    >
+                      No subtasks yet
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
         
         <DialogFooter>

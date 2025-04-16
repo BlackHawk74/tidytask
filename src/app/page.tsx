@@ -2,11 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import Spline from '@splinetool/react-spline';
+import { LoadingScreen } from "@/components/loading-animation";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  
+  const handleNavigation = (path: string) => {
+    setIsLoading(true);
+    // The LoadingScreen component will handle the actual navigation
+  };
+
   const features = [
     {
       title: "Task Management",
@@ -28,6 +39,17 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <AnimatePresence>
+        {isLoading && (
+          <LoadingScreen 
+            onComplete={() => {
+              router.push('/auth');
+            }} 
+            delay={0.2}
+          />
+        )}
+      </AnimatePresence>
+      
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
@@ -45,12 +67,12 @@ export default function Home() {
               <span className="text-xl font-bold">TidyTask</span>
             </motion.div>
           </div>
-          <Link 
-            href="/auth" 
+          <button
+            onClick={() => handleNavigation('/auth')}
             className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Get Started
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -105,16 +127,17 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.6 }}
                   >
-                    <Link
-                      href="/auth"
+                    <button
+                      onClick={() => handleNavigation('/auth')}
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       Get Started
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </button>
                   </motion.div>
                 </div>
               </motion.div>
+              
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -180,6 +203,7 @@ export default function Home() {
                   >
                     <CheckCircle className="h-6 w-6 text-primary" />
                   </motion.div>
+                  
                   <motion.h3 
                     className="mb-2 text-xl font-medium"
                     initial={{ opacity: 0, x: -10 }}
@@ -192,6 +216,7 @@ export default function Home() {
                   >
                     {feature.title}
                   </motion.h3>
+                  
                   <motion.p 
                     className="text-muted-foreground"
                     initial={{ opacity: 0 }}
@@ -217,13 +242,13 @@ export default function Home() {
               <p className="mx-auto mt-4 max-w-md text-primary-foreground/80">
                 Start using TidyTask today and transform how your family manages tasks.
               </p>
-              <Link
-                href="/auth"
+              <button
+                onClick={() => handleNavigation('/auth')}
                 className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-background px-6 py-3 font-medium text-foreground transition-colors hover:bg-background/90"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </section>

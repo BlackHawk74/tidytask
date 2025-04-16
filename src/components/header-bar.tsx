@@ -57,11 +57,15 @@ export function HeaderBar() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="hidden md:block text-sm text-muted-foreground"
           >
-            {greeting}, {activeMember?.name || "there"}!
+            {greeting}, {selectedFamilyMember ? (activeMember?.name || "there") : "Everyone"}!
           </motion.div>
         </div>
         
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+          
+          <NotificationCenter />
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -114,15 +118,6 @@ export function HeaderBar() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          <NotificationCenter />
-          
-          <ThemeToggle />
-          
-          <Button onClick={() => setIsTaskModalOpen(true)} size="icon" className="rounded-full">
-            <Plus className="h-5 w-5" />
-            <span className="sr-only">Add Task</span>
-          </Button>
         </div>
       </div>
       
