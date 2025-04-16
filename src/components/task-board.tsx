@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/lib/store"
-import { TaskStatus } from "@/lib/types"
+import { Task, TaskStatus } from "@/lib/types"
 import { filterTasksByFamilyMember, filterTasksByStatus } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskCard } from "@/components/task-card"
@@ -34,7 +33,7 @@ export function TaskBoard() {
 
 interface TaskSectionProps {
   status: TaskStatus
-  tasks: Array<any>
+  tasks: Task[]
 }
 
 function TaskSection({ status, tasks }: TaskSectionProps) {

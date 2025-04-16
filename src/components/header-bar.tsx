@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, LogOut } from "lucide-react"
+import { LogOut } from "lucide-react"
 import Link from "next/link"
 import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
@@ -46,9 +46,16 @@ export function HeaderBar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-xl font-bold"
+            className="flex items-center gap-2"
           >
-            TidyTask
+            <div className="relative h-8 w-8 overflow-hidden">
+              <img 
+                src="/logo_tidytask.png" 
+                alt="TidyTask Logo" 
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <span className="text-xl font-bold">TidyTask</span>
           </motion.div>
           
           <motion.div

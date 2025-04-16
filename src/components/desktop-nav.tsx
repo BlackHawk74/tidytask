@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
   Home, 
   Bell, 
   User, 
   Calendar, 
-  Menu, 
   ChevronLeft,
   ChevronRight,
   LogOut
@@ -23,7 +22,6 @@ export function DesktopNav() {
   const [expanded, setExpanded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const pathname = usePathname()
-  const router = useRouter()
   const { familyMembers, selectedFamilyMember, selectFamilyMember } = useStore()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -89,10 +87,7 @@ export function DesktopNav() {
     }
   }, [])
   
-  // Get selected family member or first member as default
-  const activeMember = selectedFamilyMember 
-    ? familyMembers.find(m => m.id === selectedFamilyMember) 
-    : familyMembers[0]
+  // Family member selection is handled in the dropdown
   
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/app" },

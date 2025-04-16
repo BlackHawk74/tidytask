@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { 
   DndContext, 
   DragOverlay,
@@ -11,14 +10,12 @@ import {
   useSensor,
   useSensors,
   DragStartEvent,
-  DragEndEvent,
-  DragOverEvent
+  DragEndEvent
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useStore } from "@/lib/store"
 import { Task, TaskStatus } from "@/lib/types"
-import { filterTasksByFamilyMember, filterTasksByStatus } from "@/lib/utils"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { filterTasksByFamilyMember } from "@/lib/utils"
 import { TaskCard } from "@/components/task-card"
 import { DroppableTaskSection } from "@/components/droppable-task-section"
 
@@ -92,7 +89,7 @@ export function DraggableTaskBoard() {
       } else if (targetStatus === "Today" || targetStatus === "Upcoming" || targetStatus === "Overdue") {
         // For other statuses, we need to adjust the deadline
         const now = new Date()
-        let newDeadline = now
+        const newDeadline = new Date(now)
         
         if (targetStatus === "Upcoming") {
           // Set deadline to tomorrow

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns"
+import { format, addDays, startOfWeek, isSameDay } from "date-fns"
 import { 
   DndContext, 
   DragOverlay,
