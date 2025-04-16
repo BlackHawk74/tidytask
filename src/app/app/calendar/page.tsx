@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { format, addDays, startOfWeek, isSameDay } from "date-fns"
 import { useStore } from "@/lib/store"
@@ -11,32 +11,53 @@ import { TaskCard } from "@/components/task-card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function CalendarPage() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  // Use a client-side only flag to prevent hydration mismatches
+  const [isClient, setIsClient] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [weekDays, setWeekDays] = useState<Date[]>([])
   const { tasks, selectedFamilyMember, familyMembers } = useStore()
+  
+  // Initialize dates on client-side only to avoid hydration errors
+  useEffect(() => {
+    setIsClient(true)
+    setSelectedDate(new Date())
+    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+    setWeekDays(Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)))
+  }, [])
   
   // Filter tasks based on selected family member
   const filteredTasks = selectedFamilyMember
     ? tasks.filter(task => task.assignee === selectedFamilyMember)
     : tasks
   
-  // Get tasks for the selected date
-  const tasksForSelectedDate = filteredTasks.filter(task => {
+  // Get tasks for the selected date (only if selectedDate is available)
+  const tasksForSelectedDate = selectedDate ? filteredTasks.filter(task => {
     const taskDate = new Date(task.deadline);
     return isSameDay(taskDate, selectedDate);
-  })
+  }) : []
   
-  // Generate week view (7 days starting from the current week)
-  const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 })
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i))
+  // Only render date-dependent content on the client side
+  if (!isClient || !selectedDate) {
+    return (
+      <div className="container mx-auto py-4 px-2">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-pulse text-center">
+            <div className="h-8 w-32 bg-muted rounded mb-4 mx-auto"></div>
+            <div className="h-64 w-full max-w-3xl bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   
   return (
     <div className="container mx-auto py-4 px-2">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-2xl font-bold mb-4">Calendar</h1>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-2xl font-bold mb-4">Calendar</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="md:col-span-1 h-full overflow-hidden">
