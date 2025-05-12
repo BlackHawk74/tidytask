@@ -62,11 +62,17 @@ export function TaskModal({
   useEffect(() => {
     if (open) {
       if (mode === "edit" && task) {
-        setTitle(task.title)
-        setDescription(task.description)
-        setAssignee(task.assignee)
+        setTitle(task.title || '')
+        setDescription(task.description || '')
+        setAssignee(task.assignee || '')
         setPriority(task.priority)
-        setDate(new Date(task.deadline))
+        // Safely parse the date with error handling
+        try {
+          setDate(task.due_date ? new Date(task.due_date) : new Date())
+        } catch (error) {
+          console.error('Error parsing date:', error)
+          setDate(new Date())
+        }
         setTempId(task.id)
         setTempSubtasks(task.subtasks || [])
       } else {
@@ -91,17 +97,24 @@ export function TaskModal({
         description,
         assignee,
         priority,
-        deadline: format(date, 'yyyy-MM-dd'),
+        due_date: date.toISOString(),
       })
     } else {
+      // Create a new task with required fields for database schema
       addTask({
         title,
         description,
         assignee,
         priority,
-        deadline: format(date, 'yyyy-MM-dd'),
+        due_date: date.toISOString(), // Use ISO string format for dates
         subtasks: tempSubtasks,
         completed: false,
+        status: 'Upcoming',
+        family_id: 'default', // Will be assigned by the store
+        created_by: 'current_user', // Will be assigned by the store
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        assigned_to: assignee // Use assigned_to to match database schema
       })
     }
     
@@ -201,7 +214,7 @@ export function TaskModal({
           
           <div className="mt-2">
             {mode === "edit" && task ? (
-              <SubtaskList taskId={task.id} subtasks={task.subtasks} />
+              <SubtaskList taskId={task.id} subtasks={task.subtasks || []} />
             ) : (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium">Subtasks</h3>
@@ -213,10 +226,13 @@ export function TaskModal({
                     onChange={(e) => setNewSubtaskTitle(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newSubtaskTitle.trim()) {
-                        const newSubtask = {
+                        // Create subtask with all required fields for database schema
+                        const newSubtask: Subtask = {
                           id: `temp-${Date.now()}-${tempSubtasks.length}`,
+                          task_id: tempId || `temp-task-${Date.now()}`,
                           title: newSubtaskTitle.trim(),
-                          completed: false
+                          completed: false,
+                          created_at: new Date().toISOString()
                         }
                         setTempSubtasks([...tempSubtasks, newSubtask])
                         setNewSubtaskTitle("")
@@ -227,10 +243,13 @@ export function TaskModal({
                   <Button 
                     onClick={() => {
                       if (newSubtaskTitle.trim()) {
-                        const newSubtask = {
+                        // Create subtask with all required fields for database schema
+                        const newSubtask: Subtask = {
                           id: `temp-${Date.now()}-${tempSubtasks.length}`,
+                          task_id: tempId || `temp-task-${Date.now()}`,
                           title: newSubtaskTitle.trim(),
-                          completed: false
+                          completed: false,
+                          created_at: new Date().toISOString()
                         }
                         setTempSubtasks([...tempSubtasks, newSubtask])
                         setNewSubtaskTitle("")

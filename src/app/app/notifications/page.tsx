@@ -11,9 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function NotificationsPage() {
   const { notifications, markNotificationAsRead, clearNotifications } = useStore()
   
-  const formatNotificationTime = (timestamp: string) => {
-    const date = parseISO(timestamp)
-    return format(date, 'MMM dd, yyyy h:mm a')
+  const formatNotificationTime = (timestamp: string | number | undefined) => {
+    if (!timestamp) {
+      return format(new Date(), 'MMM dd, yyyy h:mm a')
+    }
+    
+    try {
+      // Handle both string and number timestamp formats
+      const date = typeof timestamp === 'string' 
+        ? parseISO(timestamp) 
+        : new Date(timestamp)
+      
+      return format(date, 'MMM dd, yyyy h:mm a')
+    } catch (error) {
+      console.error('Error formatting notification time:', error)
+      return format(new Date(), 'MMM dd, yyyy h:mm a')
+    }
   }
   
   return (

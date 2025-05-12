@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAuth } from "@/lib/auth-context"
 
 // Types for our components
 interface NotificationData {
@@ -107,7 +108,7 @@ function NotificationAnimation({ onNotification }: NotificationAnimationProps) {
     }, 5000)
     
     return () => clearInterval(interval)
-  }, [currentNotification, notifications.length])
+  }, [currentNotification, notifications, onNotification])
   
   return (
     <AnimatePresence>
@@ -164,6 +165,12 @@ function TaskAnimation({ notificationEvent }: TaskAnimationProps) {
     { id: 5, text: "Clean bedroom", completed: false, color: "#ec4899", assignee: "Jake" },
   ])
   
+  // Camera state to track the scroll position
+  const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
+  
+  // Track which task is currently active
+  const [activeTask, setActiveTask] = useState(0)
+  
   // Listen for notification events to add new tasks
   useEffect(() => {
     if (notificationEvent && (notificationEvent.type === 'assign' || notificationEvent.type === 'add')) {
@@ -197,273 +204,155 @@ function TaskAnimation({ notificationEvent }: TaskAnimationProps) {
     }
   }, [notificationEvent])
   
-  const [activeTask, setActiveTask] = useState(0)
-  const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 })
-  
   useEffect(() => {
-    // Animation sequence
+    // Auto-check tasks for demo purposes
     const interval = setInterval(() => {
-      // First highlight the next task without completing it
-      setActiveTask(prev => {
-        const next = (prev + 1) % tasks.length
-        
-        // Move camera to focus on the active task with a smooth spring animation
-        setCameraPosition({
-          x: 0,
-          y: -next * 12
-        })
-        
-        return next
+      setTasks(prev => {
+        const index = Math.floor(Math.random() * prev.length)
+        return prev.map((task, i) => 
+          i === index && !task.completed ? { ...task, completed: true } : task
+        )
       })
-      
-      // Mark task as completed with a delay for better visual flow
-      setTimeout(() => {
-        setTasks(prev => {
-          return prev.map((task, index) => {
-            if (index === activeTask) {
-              return { ...task, completed: true }
-            }
-            return task
-          })
-        })
-      }, 1200)
-      
-    }, 2500)
+    }, 8000)
     
     return () => clearInterval(interval)
-  }, [activeTask, tasks.length])
+  }, [])
+  
+  const handleTaskClick = (index: number) => {
+    setActiveTask(index)
+    
+    // Smooth scroll to position
+    setCameraPosition({ x: 0, y: -index * 76 })
+  }
   
   return (
-    <motion.div 
-      className="relative bg-white/30 backdrop-blur-sm rounded-lg p-6 shadow-xl border-2 border-white/40 overflow-hidden"
-      style={{ background: 'linear-gradient(to bottom right, rgba(255,255,255,0.4), rgba(255,255,255,0.2))' }}
-    >
-      <NotificationAnimation onNotification={handleNotification} />
-      
-      {/* Floating action buttons with pop-out effect */}
-      <div className="absolute -right-10 top-1/4 flex flex-col gap-8">
-        {/* Notification button */}
-        <motion.div 
-          className="group relative"
-          initial={{ x: 30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-        >
-          {/* Connector line */}
-          <motion.div 
-            className="absolute top-1/2 right-full w-6 h-0.5 bg-gradient-to-r from-transparent to-white/50"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          />
-          
-          {/* Button */}
-          <motion.div 
-            className="h-14 w-14 rounded-full bg-gradient-to-br from-purple-400/80 to-purple-600/80 backdrop-blur-md flex items-center justify-center"
-            style={{ 
-              boxShadow: '0 8px 20px rgba(147, 51, 234, 0.3), 0 0 0 2px rgba(255,255,255,0.5), inset 0 -2px 10px rgba(0,0,0,0.2)' 
-            }}
-            whileHover={{ 
-              scale: 1.15, 
-              boxShadow: '0 10px 25px rgba(147, 51, 234, 0.4), 0 0 0 3px rgba(255,255,255,0.6), inset 0 -2px 10px rgba(0,0,0,0.2)'
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Bell className="h-6 w-6 text-white drop-shadow-md" />
-            
-            {/* Glow effect */}
-            <motion.div 
-              className="absolute inset-0 rounded-full bg-purple-400/20"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </motion.div>
-        </motion.div>
-        
-        {/* Profile button */}
-        <motion.div 
-          className="group relative"
-          initial={{ x: 30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
-        >
-          {/* Connector line */}
-          <motion.div 
-            className="absolute top-1/2 right-full w-6 h-0.5 bg-gradient-to-r from-transparent to-white/50"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          />
-          
-          {/* Button */}
-          <motion.div 
-            className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-400/80 to-blue-600/80 backdrop-blur-md flex items-center justify-center"
-            style={{ 
-              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(255,255,255,0.5), inset 0 -2px 10px rgba(0,0,0,0.2)' 
-            }}
-            whileHover={{ 
-              scale: 1.15, 
-              boxShadow: '0 10px 25px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(255,255,255,0.6), inset 0 -2px 10px rgba(0,0,0,0.2)'
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <User className="h-6 w-6 text-white drop-shadow-md" />
-          </motion.div>
-        </motion.div>
-        
-        {/* Calendar button */}
-        <motion.div 
-          className="group relative"
-          initial={{ x: 30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
-        >
-          {/* Connector line */}
-          <motion.div 
-            className="absolute top-1/2 right-full w-6 h-0.5 bg-gradient-to-r from-transparent to-white/50"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          />
-          
-          {/* Button */}
-          <motion.div 
-            className="h-14 w-14 rounded-full bg-gradient-to-br from-orange-400/80 to-orange-600/80 backdrop-blur-md flex items-center justify-center"
-            style={{ 
-              boxShadow: '0 8px 20px rgba(249, 115, 22, 0.3), 0 0 0 2px rgba(255,255,255,0.5), inset 0 -2px 10px rgba(0,0,0,0.2)' 
-            }}
-            whileHover={{ 
-              scale: 1.15, 
-              boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4), 0 0 0 3px rgba(255,255,255,0.6), inset 0 -2px 10px rgba(0,0,0,0.2)'
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Calendar className="h-6 w-6 text-white drop-shadow-md" />
-          </motion.div>
-        </motion.div>
-      </div>
-      <div className="sticky top-0 z-10 bg-white/30 backdrop-blur-md p-4 -mx-4 -mt-4 mb-6 border-b border-white/20 rounded-t-lg shadow-sm">
-        <h3 className="text-xl font-semibold text-white drop-shadow-md flex items-center">
-          <span>Today's Tasks</span>
-          <motion.span 
-            className="ml-2 bg-primary/20 text-primary text-xs py-1 px-2 rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-          >
-            {tasks.filter(t => !t.completed).length} remaining
-          </motion.span>
-        </h3>
+    <>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white">Family Tasks</h3>
+          <p className="text-white/70">Manage household responsibilities</p>
+        </div>
+        <div className="flex space-x-2">
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10">
+            <Bell className="h-5 w-5" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10">
+            <User className="h-5 w-5" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10">
+            <Calendar className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
-      <div className="relative overflow-hidden" style={{ maxHeight: "350px" }}>
-        <motion.div 
-          className="space-y-4 pt-2"
-          animate={{ y: cameraPosition.y }}
-          transition={{ type: "spring", stiffness: 100, damping: 20, mass: 0.5 }}
+      <div className="bg-white/10 backdrop-blur-md rounded-xl p-1 shadow-lg overflow-hidden">
+        <div 
+          className="transition-transform duration-300 ease-out"
+          style={{ transform: `translateY(${cameraPosition.y}px)` }}
         >
-        {tasks.map((task, index) => (
-          <motion.div 
-            key={task.id}
-            className={`flex items-center gap-4 p-4 rounded-md ${task.isNew ? 'bg-primary/20 ring-2 ring-primary/50' : index === activeTask ? 'bg-white/40 ring-2 ring-white/70' : 'bg-white/20'} shadow-md`}
-            initial={task.isNew ? { opacity: 0, height: 0, y: -20 } : { opacity: 0, x: -20 }}
-            animate={{ 
-              opacity: 1, 
-              x: 0,
-              height: 'auto',
-              y: 0,
-              scale: task.isNew ? 1.05 : index === activeTask ? 1.05 : 1,
-              boxShadow: index === activeTask ? '0 8px 16px rgba(0, 0, 0, 0.1)' : '0 4px 6px rgba(0, 0, 0, 0.05)'
-            }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 400, 
-              damping: 30,
-              delay: task.isNew ? 0 : index * 0.05,
-              scale: { type: "spring", stiffness: 300, damping: 20 }
-            }}
-            layout
-          >
+          {tasks.map((task, index) => (
             <motion.div 
-              className="flex-shrink-0"
-              animate={task.completed ? { scale: [1, 1.5, 1], rotate: [0, 10, 0] } : {}}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
+              key={task.id}
+              initial={task.isNew ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`
+                p-4 mb-1 rounded-lg flex items-center cursor-pointer
+                ${activeTask === index ? 'bg-white/20' : 'hover:bg-white/10'}
+                ${task.completed ? 'opacity-60' : 'opacity-100'}
+                transition-all duration-200 ease-in-out
+              `}
+              onClick={() => handleTaskClick(index)}
             >
-              {task.completed ? (
-                <CheckCircle2 className="h-7 w-7 text-green-400 drop-shadow-md" />
-              ) : index === activeTask ? (
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 0.5, repeat: 1 }}
-                >
-                  <Pencil className="h-7 w-7 text-white drop-shadow-md" />
-                </motion.div>
-              ) : (
-                <Circle className="h-7 w-7 text-white/80 drop-shadow-md" />
-              )}
-            </motion.div>
-            
-            <div className="flex-1">
-              <motion.p 
-                className={`text-base font-medium ${task.completed ? 'line-through text-white/70' : 'text-white'} drop-shadow-sm`}
-                animate={index === activeTask && !task.completed ? 
-                  { scale: [1, 1.03, 1], x: [0, 2, 0], color: ['#ffffff', '#f8f8f8', '#ffffff'] } : 
-                  task.completed ? { opacity: [1, 0.7, 0.7] } : {}
-                }
-                transition={{ duration: 0.8, repeat: task.completed ? 0 : 1, ease: "easeInOut" }}
+              <div 
+                className={`
+                  w-5 h-5 rounded-full flex items-center justify-center mr-3 
+                  ${task.completed ? 'bg-green-500' : 'border-2 border-white/70'}
+                `}
               >
-                {task.text}
-              </motion.p>
-              {task.assignee && (
-                <motion.p 
-                  className="text-xs text-white/60 mt-1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
+                {task.completed && <Check className="h-3 w-3 text-white" />}
+              </div>
+              <div>
+                <p className={`text-white font-medium ${task.completed ? 'line-through' : ''}`}>
+                  {task.text}
+                </p>
+                <p className="text-xs text-white/60">
                   Assigned to: {task.assignee}
-                </motion.p>
-              )}
-            </div>
-            
-            <motion.div 
-              className="h-4 w-4 rounded-full shadow-md"
-              style={{ backgroundColor: task.color }}
-              animate={index === activeTask ? 
-                { scale: [1, 1.4, 1], boxShadow: ['0px 0px 0px rgba(0,0,0,0.2)', '0px 0px 8px rgba(0,0,0,0.5)', '0px 0px 0px rgba(0,0,0,0.2)'] } : 
-                {}
-              }
-              transition={{ duration: 0.8, repeat: index === activeTask ? 1 : 0, repeatType: "reverse" }}
-            />
-          </motion.div>
-        ))}
-        </motion.div>
-        
-        {/* Gradient overlay at the bottom for a fading effect */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/30 to-transparent pointer-events-none"></div>
+                </p>
+              </div>
+              <div 
+                className="ml-auto w-2 h-12 rounded-full" 
+                style={{ backgroundColor: task.color }}
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
-    </motion.div>
+      
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.3 }}
+        className="mx-auto bg-white/10 backdrop-blur-md rounded-xl p-3 shadow-lg mt-4"
+      >
+        <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+          <Pencil className="mr-2 h-4 w-4" />
+          Add New Task
+        </Button>
+      </motion.div>
+      
+      {/* Notification animation */}
+      <div className="relative">
+        <NotificationAnimation onNotification={handleNotification} />
+      </div>
+    </>
   )
 }
 
 export default function AuthPage() {
   const router = useRouter()
+  const { signIn, signUp } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [accountType, setAccountType] = useState("personal")
   const [notificationEvent, setNotificationEvent] = useState<NotificationEvent | null>(null)
+  const [authError, setAuthError] = useState("")
   
   // Function to handle new notifications
   const handleNotification = (notification: NotificationEvent) => {
     setNotificationEvent(notification)
   }
   
-  const handleAuth = (e: React.FormEvent) => {
+  // Handle Login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAuthError('')
     setIsLoading(true)
     
-    // Simulate loading
-    setTimeout(() => {
-      // Keep loading true, the LoadingScreen will handle navigation
-    }, 1500)
+    try {
+      await signIn(email, password)
+      // The auth context will handle redirection
+    } catch (error: any) {
+      setAuthError(error.message || 'Failed to sign in')
+      setIsLoading(false)
+    }
+  }
+  
+  // Handle Sign Up
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthError('')
+    setIsLoading(true)
+    
+    try {
+      await signUp(email, password, name)
+      // The auth context will handle redirection
+    } catch (error: any) {
+      setAuthError(error.message || 'Failed to create account')
+      setIsLoading(false)
+    }
   }
   
   return (
@@ -478,6 +367,7 @@ export default function AuthPage() {
           />
         )}
       </AnimatePresence>
+      
       {/* TidyTask Logo */}
       <motion.div 
         className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20 lg:left-6 lg:translate-x-0"
@@ -492,6 +382,7 @@ export default function AuthPage() {
           style={{ filter: 'brightness(0) invert(1)' }} 
         />
       </motion.div>
+      
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/70" />
         <div className="relative z-20 flex items-center text-lg font-medium">
@@ -524,6 +415,7 @@ export default function AuthPage() {
         </motion.div>
         <div className="absolute bottom-0 left-0 right-0 top-0 bg-gradient-to-t from-primary/90 to-primary/40 opacity-30" />
       </div>
+      
       <div className="lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
@@ -532,11 +424,13 @@ export default function AuthPage() {
               Sign in or create an account to get started
             </p>
           </div>
+          
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login" className="transition-all duration-300 ease-in-out">Login</TabsTrigger>
               <TabsTrigger value="register" className="transition-all duration-300 ease-in-out">Sign Up</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="login" className="transition-all duration-300 ease-in-out">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -544,40 +438,57 @@ export default function AuthPage() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Login</CardTitle>
-                  <CardDescription>
-                    Enter your email and password to access your account
-                  </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleAuth}>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="name@example.com" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" required />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? (
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Login</CardTitle>
+                    <CardDescription>
+                      Enter your email and password to access your account
+                    </CardDescription>
+                  </CardHeader>
+                  <form onSubmit={handleLogin}>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email">Email</Label>
+                        <Input 
+                          id="login-email" 
+                          type="email" 
+                          placeholder="name@example.com" 
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required 
                         />
-                      ) : null}
-                      {isLoading ? "Logging in..." : "Login"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password">Password</Label>
+                        <Input 
+                          id="login-password" 
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required 
+                        />
+                      </div>
+                      {authError && (
+                        <p className="text-sm text-destructive">{authError}</p>
+                      )}
+                    </CardContent>
+                    <CardFooter className="pt-4">
+                      <Button className="w-full" type="submit" disabled={isLoading}>
+                        {isLoading ? (
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                          />
+                        ) : null}
+                        {isLoading ? "Logging in..." : "Login"}
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Card>
               </motion.div>
             </TabsContent>
+            
             <TabsContent value="register" className="transition-all duration-300 ease-in-out">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -585,58 +496,68 @@ export default function AuthPage() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create an account</CardTitle>
-                  <CardDescription>
-                    Enter your information to create a new account
-                  </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleAuth}>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input id="name" placeholder="John Doe" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="name@example.com" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" required />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Account Type</Label>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <input type="radio" id="personal" name="account-type" className="h-4 w-4 accent-blueprint-primary" defaultChecked />
-                          <Label htmlFor="personal" className="text-sm font-normal">Personal</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="radio" id="family" name="account-type" className="h-4 w-4 accent-blueprint-primary" />
-                          <Label htmlFor="family" className="text-sm font-normal">Family</Label>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? (
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Create an account</CardTitle>
+                    <CardDescription>
+                      Enter your information to create a new account
+                    </CardDescription>
+                  </CardHeader>
+                  <form onSubmit={handleSignUp}>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input 
+                          id="name" 
+                          placeholder="John Doe" 
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required 
                         />
-                      ) : null}
-                      {isLoading ? "Creating account..." : "Create account"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input 
+                          id="signup-email" 
+                          type="email" 
+                          placeholder="name@example.com" 
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">Password</Label>
+                        <Input 
+                          id="signup-password" 
+                          type="password" 
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required 
+                        />
+                      </div>
+                      {authError && (
+                        <p className="text-sm text-destructive">{authError}</p>
+                      )}
+                    </CardContent>
+                    <CardFooter className="pt-4">
+                      <Button className="w-full" type="submit" disabled={isLoading}>
+                        {isLoading ? (
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                          />
+                        ) : null}
+                        {isLoading ? "Creating account..." : "Create account"}
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Card>
               </motion.div>
             </TabsContent>
           </Tabs>
+          
           <p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <a href="#" className="underline underline-offset-4 hover:text-primary">
@@ -646,13 +567,9 @@ export default function AuthPage() {
             <a href="#" className="underline underline-offset-4 hover:text-primary">
               Privacy Policy
             </a>
-            .
           </p>
         </div>
       </div>
-      
-      {/* Notification component */}
-      <NotificationAnimation onNotification={handleNotification} />
     </div>
   )
 }

@@ -9,40 +9,82 @@ export function cn(...inputs: ClassValue[]) {
 
 // Date formatting functions
 export function formatDate(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date
-  return format(dateObj, 'MMM dd, yyyy')
+  try {
+    // Handle potential invalid date strings
+    if (date === null || date === undefined) {
+      return format(new Date(), 'MMM dd, yyyy')
+    }
+    
+    const dateObj = typeof date === 'string' ? parseISO(date) : date
+    return format(dateObj, 'MMM dd, yyyy')
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return format(new Date(), 'MMM dd, yyyy')
+  }
 }
 
 export function formatRelativeDate(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date
-  const today = new Date()
-  
-  if (isSameDay(dateObj, today)) {
+  try {
+    // Handle potential invalid date strings
+    if (date === null || date === undefined) {
+      return 'Today'
+    }
+    
+    const dateObj = typeof date === 'string' ? parseISO(date) : date
+    const today = new Date()
+    
+    if (isSameDay(dateObj, today)) {
+      return 'Today'
+    } else if (isSameDay(dateObj, addDays(today, 1))) {
+      return 'Tomorrow'
+    } else if (isSameDay(dateObj, addDays(today, -1))) {
+      return 'Yesterday'
+    } else {
+      return formatDate(date)
+    }
+  } catch (error) {
+    console.error('Error formatting relative date:', error)
     return 'Today'
-  } else if (isSameDay(dateObj, addDays(today, 1))) {
-    return 'Tomorrow'
-  } else if (isSameDay(dateObj, addDays(today, -1))) {
-    return 'Yesterday'
-  } else {
-    return formatDate(date)
   }
 }
 
 // Task status determination
 export function getTaskStatus(task: Task): TaskStatus {
-  if (task.completed) {
-    return 'Completed'
-  }
-  
-  const today = new Date()
-  const deadline = parseISO(task.deadline)
-  
-  if (isBefore(deadline, today) && !isSameDay(deadline, today)) {
-    return 'Overdue'
-  } else if (isSameDay(deadline, today)) {
-    return 'Today'
-  } else {
-    return 'Upcoming'
+  try {
+    if (task.completed) {
+      return 'Completed'
+    }
+    
+    const today = new Date()
+    
+    // Handle potentially invalid date values
+    let deadline: Date
+    try {
+      // First try to parse the due_date if it exists
+      if (task.due_date) {
+        deadline = parseISO(task.due_date)
+        // Check if the parsed date is valid
+        if (isNaN(deadline.getTime())) {
+          throw new Error('Invalid date')
+        }
+      } else {
+        deadline = today
+      }
+    } catch (error) {
+      console.error('Error parsing due_date:', error)
+      deadline = today
+    }
+    
+    if (isBefore(deadline, today) && !isSameDay(deadline, today)) {
+      return 'Overdue'
+    } else if (isSameDay(deadline, today)) {
+      return 'Today'
+    } else {
+      return 'Upcoming'
+    }
+  } catch (error) {
+    console.error('Error determining task status:', error)
+    return 'Upcoming' // Default fallback
   }
 }
 
@@ -73,8 +115,11 @@ export function getPriorityColor(priority: Priority): string {
 
 // Calculate task progress
 export function calculateTaskProgress(task: Task): number {
-  if (task.subtasks.length === 0) return task.completed ? 100 : 0
+  // Ensure subtasks is available with fallback to empty array
+  const subtasks = task.subtasks || []
   
-  const completedSubtasks = task.subtasks.filter(subtask => subtask.completed).length
-  return Math.round((completedSubtasks / task.subtasks.length) * 100)
+  if (subtasks.length === 0) return task.completed ? 100 : 0
+  
+  const completedSubtasks = subtasks.filter(subtask => subtask.completed).length
+  return Math.round((completedSubtasks / subtasks.length) * 100)
 }

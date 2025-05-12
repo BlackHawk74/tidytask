@@ -203,7 +203,7 @@ export function DesktopNav() {
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={member.avatarUrl} alt={member.name} />
                   <AvatarFallback style={{ backgroundColor: member.color }}>
-                    {member.name.charAt(0)}
+                    {member.name ? member.name.charAt(0) : '?'}
                   </AvatarFallback>
                 </Avatar>
                 {expanded && (

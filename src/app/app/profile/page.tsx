@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Plus, Trash2, UserPlus } from "lucide-react"
 import { useStore } from "@/lib/store"
+import { Role } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -28,7 +29,7 @@ export default function ProfilePage() {
   const { familyMembers, addFamilyMember, deleteFamilyMember } = useStore()
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [newMemberName, setNewMemberName] = useState("")
-  const [newMemberRole, setNewMemberRole] = useState("Member")
+  const [newMemberRole, setNewMemberRole] = useState("member")
   const [newMemberColor, setNewMemberColor] = useState("#4F46E5")
   
   const colorOptions = [
@@ -44,11 +45,16 @@ export default function ProfilePage() {
   
   const handleAddMember = () => {
     if (newMemberName.trim()) {
+      // Create family member with required fields for database schema
       addFamilyMember({
         name: newMemberName.trim(),
-        role: newMemberRole as "Admin" | "Member",
+        role: newMemberRole as Role,
         color: newMemberColor,
-        avatarUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${newMemberName.trim()}`
+        color_theme: newMemberColor,
+        avatarUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${newMemberName.trim()}`,
+        family_id: 'default', // Will be assigned by the store
+        user_id: 'default',   // Will be assigned by the store
+        joined_at: new Date().toISOString()
       })
       setNewMemberName("")
       setNewMemberRole("Member")
@@ -84,12 +90,12 @@ export default function ProfilePage() {
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={member.avatarUrl} alt={member.name} />
                     <AvatarFallback style={{ backgroundColor: member.color }}>
-                      {member.name.charAt(0)}
+                      {member.name ? member.name.charAt(0) : '?'}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1">
-                    <h3 className="text-lg font-medium">{member.name}</h3>
+                    <h3 className="text-lg font-medium">{member.name || 'Unknown'}</h3>
                     <div className="mt-1 flex items-center gap-2">
                       <span 
                         className="inline-block h-3 w-3 rounded-full" 

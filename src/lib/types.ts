@@ -1,41 +1,81 @@
 export type Priority = 'Low' | 'Medium' | 'High';
-export type Role = 'Admin' | 'Member';
+export type Role = 'admin' | 'member';
+export type TaskStatus = 'Today' | 'Upcoming' | 'Completed' | 'Overdue';
 
-export interface Subtask {
+export interface User {
   id: string;
-  title: string;
-  completed: boolean;
+  name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  color_theme: string | null;
+  setup_completed: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
-export interface Task {
+export interface Family {
   id: string;
-  title: string;
-  description: string;
-  assignee: string; // familyMemberId
-  priority: Priority;
-  deadline: string;
-  subtasks: Subtask[];
-  completed: boolean;
-  createdAt: string;
+  name: string;
+  created_by: string;
+  created_at: string;
 }
 
 export interface FamilyMember {
   id: string;
-  name: string;
-  avatarUrl?: string;
-  color: string;
+  family_id: string;
+  user_id: string;
   role: Role;
+  color_theme: string;
+  joined_at: string;
+  
+  // UI properties (for compatibility with existing components)
+  name?: string; // Derived from user record
+  avatarUrl?: string; // Derived from user record
+  color?: string; // Alias for color_theme
+}
+
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  created_at: string;
+}
+
+export interface Task {
+  id: string;
+  family_id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: Priority;
+  due_date: string | null;
+  created_by: string;
+  assigned_to: string | null;
+  created_at: string;
+  updated_at: string;
+  completed: boolean | null;
+  subtasks?: Subtask[];
+  
+  // UI properties (for compatibility with existing components)
+  assignee?: string; // Alias for assigned_to
+  deadline?: string; // Alias for due_date
+  createdAt?: string; // Alias for created_at
 }
 
 export interface Notification {
   id: string;
+  user_id: string;
   message: string;
-  timestamp: string;
   read: boolean;
-  taskId?: string;
+  created_at: string;
+  type?: string | null;
+  related_task_id?: string | null;
+  
+  // UI properties (for compatibility with existing components)
+  timestamp?: number; // Computed from created_at
+  taskId?: string; // Alias for related_task_id
 }
-
-export type TaskStatus = 'Today' | 'Upcoming' | 'Completed' | 'Overdue';
 
 export interface AppState {
   tasks: Task[];
