@@ -8,14 +8,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Date formatting functions
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | undefined): string {
   try {
     // Handle potential invalid date strings
     if (date === null || date === undefined) {
       return format(new Date(), 'MMM dd, yyyy')
     }
     
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
+    let dateObj: Date;
+    
+    if (typeof date === 'string') {
+      // Handle ISO format dates (with T or Z)
+      if (date.includes('T') || date.includes('Z')) {
+        dateObj = parseISO(date);
+      } else {
+        // For other string formats, use the Date constructor
+        dateObj = new Date(date);
+      }
+    } else {
+      // It's already a Date object
+      dateObj = date;
+    }
+    
+    // Validate the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date detected:', date);
+      return format(new Date(), 'MMM dd, yyyy');
+    }
+    
     return format(dateObj, 'MMM dd, yyyy')
   } catch (error) {
     console.error('Error formatting date:', error)
@@ -23,14 +43,34 @@ export function formatDate(date: string | Date): string {
   }
 }
 
-export function formatRelativeDate(date: string | Date): string {
+export function formatRelativeDate(date: string | Date | undefined): string {
   try {
     // Handle potential invalid date strings
     if (date === null || date === undefined) {
       return 'Today'
     }
     
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
+    let dateObj: Date;
+    
+    if (typeof date === 'string') {
+      // Handle ISO format dates (with T or Z)
+      if (date.includes('T') || date.includes('Z')) {
+        dateObj = parseISO(date);
+      } else {
+        // For other string formats, use the Date constructor
+        dateObj = new Date(date);
+      }
+    } else {
+      // It's already a Date object
+      dateObj = date;
+    }
+    
+    // Validate the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date detected:', date);
+      return 'Today';
+    }
+    
     const today = new Date()
     
     if (isSameDay(dateObj, today)) {
@@ -56,30 +96,52 @@ export function getTaskStatus(task: Task): TaskStatus {
     }
     
     const today = new Date()
-    
-    // Handle potentially invalid date values
-    let deadline: Date
-    try {
-      // First try to parse the due_date if it exists
-      if (task.due_date) {
-        deadline = parseISO(task.due_date)
-        // Check if the parsed date is valid
-        if (isNaN(deadline.getTime())) {
-          throw new Error('Invalid date')
+    // Set hours, minutes, seconds, and milliseconds to 0 for accurate day comparison
+    today.setHours(0, 0, 0, 0)
+
+    let deadlineDate: Date | null = null;
+
+    if (task.deadline) {
+      try {
+        // Try parsing the deadline
+        if (typeof task.deadline === 'string') {
+          // Check if it's an ISO string
+          if (task.deadline.includes('T') || task.deadline.includes('Z')) {
+            deadlineDate = parseISO(task.deadline)
+          } else {
+            // Regular date string
+            deadlineDate = new Date(task.deadline)
+          }
+        } else {
+          // It might already be a Date object (though unlikely from store)
+          deadlineDate = new Date(task.deadline)
         }
-      } else {
-        deadline = today
+        
+        // Check if the parsed date is valid
+        if (isNaN(deadlineDate.getTime())) {
+          console.warn('Invalid task deadline encountered:', task.deadline);
+          deadlineDate = null; // Treat invalid date as no deadline
+        }
+      } catch (error) {
+        console.error('Error parsing task deadline:', task.deadline, error)
+        deadlineDate = null; // Treat parsing error as no deadline
       }
-    } catch (error) {
-      console.error('Error parsing due_date:', error)
-      deadline = today
     }
-    
-    if (isBefore(deadline, today) && !isSameDay(deadline, today)) {
+
+    // If no valid deadline, it's Upcoming
+    if (!deadlineDate) {
+      return 'Upcoming';
+    }
+
+    // Set hours, minutes, seconds, and milliseconds to 0 for accurate day comparison
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    // Now compare dates
+    if (isBefore(deadlineDate, today)) {
       return 'Overdue'
-    } else if (isSameDay(deadline, today)) {
+    } else if (isSameDay(deadlineDate, today)) {
       return 'Today'
-    } else {
+    } else { // isAfter(deadlineDate, today)
       return 'Upcoming'
     }
   } catch (error) {

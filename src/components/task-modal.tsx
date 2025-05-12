@@ -68,7 +68,7 @@ export function TaskModal({
         setPriority(task.priority)
         // Safely parse the date with error handling
         try {
-          setDate(task.due_date ? new Date(task.due_date) : new Date())
+          setDate(task.deadline ? new Date(task.deadline) : new Date())
         } catch (error) {
           console.error('Error parsing date:', error)
           setDate(new Date())
@@ -91,13 +91,29 @@ export function TaskModal({
   const handleSubmit = () => {
     if (!title.trim() || !assignee) return
     
+    // Ensure date is valid before converting to ISO string
+    let formattedDate: string;
+    try {
+      // Make sure we have a valid date object
+      if (date && !isNaN(date.getTime())) {
+        formattedDate = date.toISOString();
+      } else {
+        // Fallback to current date if the date is invalid
+        console.warn('Invalid date detected, using current date instead');
+        formattedDate = new Date().toISOString();
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      formattedDate = new Date().toISOString();
+    }
+    
     if (mode === "edit" && task) {
       updateTask(task.id, {
         title,
         description,
         assignee,
         priority,
-        due_date: date.toISOString(),
+        deadline: formattedDate, // Use deadline
       })
     } else {
       // Create a new task with required fields for database schema
@@ -106,7 +122,7 @@ export function TaskModal({
         description,
         assignee,
         priority,
-        due_date: date.toISOString(), // Use ISO string format for dates
+        deadline: formattedDate, // Use deadline instead of due_date
         subtasks: tempSubtasks,
         completed: false,
         status: 'Upcoming',

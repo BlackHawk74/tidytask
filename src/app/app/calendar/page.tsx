@@ -31,8 +31,15 @@ export default function CalendarPage() {
   
   // Get tasks for the selected date (only if selectedDate is available)
   const tasksForSelectedDate = selectedDate ? filteredTasks.filter(task => {
-    const taskDate = new Date(task.deadline);
-    return isSameDay(taskDate, selectedDate);
+    // Safely handle potentially undefined or invalid deadline
+    if (!task.deadline) return false;
+    try {
+      const taskDate = new Date(task.deadline);
+      return !isNaN(taskDate.getTime()) && isSameDay(taskDate, selectedDate);
+    } catch (e) { 
+      console.error("Error parsing task deadline for selected date:", task.deadline, e);
+      return false;
+    }
   }) : []
   
   // Only render date-dependent content on the client side
@@ -159,9 +166,17 @@ export default function CalendarPage() {
           <h2 className="text-xl font-medium mb-3">Week View</h2>
           <div className="grid grid-cols-1 md:grid-cols-7 gap-3" style={{ minHeight: "200px" }}>
             {weekDays.map((day) => {
-              const dayTasks = filteredTasks.filter(task => 
-                isSameDay(new Date(task.deadline), day)
-              )
+              const dayTasks = filteredTasks.filter(task => {
+                // Safely handle potentially undefined or invalid deadline
+                if (!task.deadline) return false;
+                try {
+                  const taskDate = new Date(task.deadline);
+                  return !isNaN(taskDate.getTime()) && isSameDay(taskDate, day);
+                } catch (e) {
+                  console.error("Error parsing task deadline for week view:", task.deadline, e);
+                  return false;
+                }
+              })
               const isSelected = isSameDay(day, selectedDate)
               
               return (
@@ -197,7 +212,8 @@ export default function CalendarPage() {
                                     <Avatar className="h-6 w-6 ml-1 flex-shrink-0">
                                       <AvatarImage src={familyMembers.find((m) => m.id === task.assignee)?.avatarUrl} />
                                       <AvatarFallback className={`text-xs ${familyMembers.find((m) => m.id === task.assignee)?.color}`}>
-                                        {familyMembers.find((m) => m.id === task.assignee)?.name.substring(0, 2)}
+                                        {/* Add optional chaining for name before substring */}
+                                        {familyMembers.find((m) => m.id === task.assignee)?.name?.substring(0, 2) ?? '?'}
                                       </AvatarFallback>
                                     </Avatar>
                                   )}

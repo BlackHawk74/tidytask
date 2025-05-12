@@ -72,7 +72,7 @@ export function DraggableTaskBoard() {
         
         if (task) {
           // Mark all subtasks as completed
-          const updatedSubtasks = task.subtasks.map(subtask => ({
+          const updatedSubtasks = (task.subtasks || []).map(subtask => ({
             ...subtask,
             completed: true
           }))

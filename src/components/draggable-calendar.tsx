@@ -35,6 +35,7 @@ export function DraggableCalendar() {
   
   // Get tasks for the selected date
   const tasksForSelectedDate = filteredTasks.filter(task => {
+    if (!task.deadline) return false; // Skip tasks without a deadline
     const taskDate = new Date(task.deadline);
     return isSameDay(taskDate, selectedDate);
   })
@@ -205,7 +206,7 @@ export function DraggableCalendar() {
             <div className="grid grid-cols-1 md:grid-cols-7 gap-3" style={{ minHeight: "200px" }}>
               {weekDays.map((day) => {
                 const dayTasks = filteredTasks.filter(task => 
-                  isSameDay(new Date(task.deadline), day)
+                  task.deadline && isSameDay(new Date(task.deadline), day)
                 )
                 const isSelected = isSameDay(day, selectedDate)
                 

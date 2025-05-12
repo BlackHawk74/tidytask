@@ -49,9 +49,9 @@ export function TaskCard({ task, isCalendarView = false, isDragging = false }: T
               
               {assignee && (
                 <Avatar className="h-6 w-6 flex-shrink-0">
-                  <AvatarImage src={assignee.avatarUrl} alt={assignee.name} />
+                  <AvatarImage src={assignee.avatarUrl} alt={assignee.name || 'User'} />
                   <AvatarFallback style={{ backgroundColor: assignee.color }}>
-                    {assignee.name.charAt(0)}
+                    {assignee.name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
               )}
@@ -131,7 +131,7 @@ export function TaskCard({ task, isCalendarView = false, isDragging = false }: T
               transition={{ duration: 0.3 }}
               className="border-t px-4 py-3"
             >
-              <SubtaskList taskId={task.id} subtasks={task.subtasks} />
+              <SubtaskList taskId={task.id} subtasks={task.subtasks || []} />
             </motion.div>
           )}
         </Card>

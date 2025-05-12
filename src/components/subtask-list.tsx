@@ -21,8 +21,10 @@ export function SubtaskList({ taskId, subtasks }: SubtaskListProps) {
   const handleAddSubtask = () => {
     if (newSubtaskTitle.trim()) {
       addSubtask(taskId, {
+        task_id: taskId,
         title: newSubtaskTitle.trim(),
-        completed: false
+        completed: false,
+        created_at: new Date().toISOString(),
       })
       setNewSubtaskTitle("")
     }

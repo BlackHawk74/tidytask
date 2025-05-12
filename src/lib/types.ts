@@ -49,7 +49,7 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   priority: Priority;
-  due_date: string | null;
+  deadline?: string; // ISO 8601 date string (optional)
   created_by: string;
   assigned_to: string | null;
   created_at: string;
@@ -59,7 +59,6 @@ export interface Task {
   
   // UI properties (for compatibility with existing components)
   assignee?: string; // Alias for assigned_to
-  deadline?: string; // Alias for due_date
   createdAt?: string; // Alias for created_at
 }
 
@@ -84,9 +83,9 @@ export interface AppState {
   selectedFamilyMember: string | null;
   
   // Task Actions
-  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
-  updateTask: (id: string, task: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
+  updateTask: (id: string, task: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   completeTask: (id: string) => void;
   
   // Subtask Actions
@@ -95,13 +94,17 @@ export interface AppState {
   deleteSubtask: (taskId: string, subtaskId: string) => void;
   
   // Family Member Actions
-  addFamilyMember: (member: Omit<FamilyMember, 'id'>) => void;
-  updateFamilyMember: (id: string, member: Partial<FamilyMember>) => void;
-  deleteFamilyMember: (id: string) => void;
+  addFamilyMember: (member: Omit<FamilyMember, 'id'>) => Promise<void>;
+  updateFamilyMember: (id: string, member: Partial<FamilyMember>) => Promise<void>;
+  deleteFamilyMember: (id: string) => Promise<void>;
   selectFamilyMember: (id: string | null) => void;
   
   // Notification Actions
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
+  
+  // Actions to hydrate store from backend
+  setTasks: (tasks: Task[]) => void;
+  setFamilyMembers: (members: FamilyMember[]) => void;
 }

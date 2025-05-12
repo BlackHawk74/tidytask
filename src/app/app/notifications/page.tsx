@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, isValid } from "date-fns"
 import { Bell, Check, Trash2 } from "lucide-react"
 import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
@@ -11,21 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function NotificationsPage() {
   const { notifications, markNotificationAsRead, clearNotifications } = useStore()
   
-  const formatNotificationTime = (timestamp: string | number | undefined) => {
-    if (!timestamp) {
-      return format(new Date(), 'MMM dd, yyyy h:mm a')
+  const formatNotificationTime = (isoString: string | undefined) => {
+    if (!isoString) {
+      console.warn('formatNotificationTime received undefined or empty string');
+      return format(new Date(), 'MMM dd, yyyy h:mm a'); // Fallback
     }
-    
     try {
-      // Handle both string and number timestamp formats
-      const date = typeof timestamp === 'string' 
-        ? parseISO(timestamp) 
-        : new Date(timestamp)
-      
-      return format(date, 'MMM dd, yyyy h:mm a')
+      const date = parseISO(isoString);
+      // Check if parsing resulted in a valid date
+      if (!isValid(date)) {
+        console.error('Invalid date parsed from isoString:', isoString);
+        return format(new Date(), 'MMM dd, yyyy h:mm a'); // Fallback
+      }
+      return format(date, 'MMM dd, yyyy h:mm a');
     } catch (error) {
-      console.error('Error formatting notification time:', error)
-      return format(new Date(), 'MMM dd, yyyy h:mm a')
+      console.error('Error parsing ISO string in formatNotificationTime:', error, 'isoString:', isoString);
+      return format(new Date(), 'MMM dd, yyyy h:mm a'); // General fallback
     }
   }
   
@@ -69,11 +70,9 @@ export default function NotificationsPage() {
                           <Bell className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className={`${notification.read ? "" : "font-medium"}`}>
-                            {notification.message}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatNotificationTime(notification.timestamp)}
+                          <p className="text-sm font-medium">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatNotificationTime(notification.created_at)}
                           </p>
                         </div>
                       </div>
@@ -82,7 +81,7 @@ export default function NotificationsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 shrink-0"
                           onClick={() => markNotificationAsRead(notification.id)}
                         >
                           <Check className="h-4 w-4" />

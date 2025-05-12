@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { LogOut } from "lucide-react"
 import Link from "next/link"
@@ -23,17 +23,21 @@ import { NotificationCenter } from "@/components/notification-center"
 export function HeaderBar() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { familyMembers, selectedFamilyMember, selectFamilyMember } = useStore()
-  
-  // Get current time to display greeting
-  const currentHour = new Date().getHours()
-  let greeting = "Good evening"
-  if (currentHour < 12) {
-    greeting = "Good morning"
-  } else if (currentHour < 18) {
-    greeting = "Good afternoon"
-  }
-  
-  // Get selected family member or first member as default
+  const [greeting, setGreeting] = useState("Hello");
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+    const currentHour = new Date().getHours()
+    let currentGreeting = "Good evening"
+    if (currentHour < 12) {
+      currentGreeting = "Good morning"
+    } else if (currentHour < 18) {
+      currentGreeting = "Good afternoon"
+    }
+    setGreeting(currentGreeting);
+  }, []);
+
   const activeMember = selectedFamilyMember 
     ? familyMembers.find(m => m.id === selectedFamilyMember) 
     : familyMembers[0]
@@ -64,7 +68,7 @@ export function HeaderBar() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="hidden md:block text-sm text-muted-foreground"
           >
-            {greeting}, {selectedFamilyMember ? (activeMember?.name || "there") : "Everyone"}!
+            {hasMounted ? `${greeting}, ${selectedFamilyMember ? (activeMember?.name || "there") : "Everyone"}!` : <span>&nbsp;</span>}
           </motion.div>
         </div>
         
@@ -79,9 +83,9 @@ export function HeaderBar() {
                 <span>Family</span>
                 {activeMember && (
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={activeMember.avatarUrl} alt={activeMember.name} />
+                    <AvatarImage src={activeMember.avatarUrl} alt={activeMember.name || 'Member'} />
                     <AvatarFallback style={{ backgroundColor: activeMember.color }}>
-                      {activeMember.name.charAt(0)}
+                      {activeMember.name ? activeMember.name.charAt(0) : '?'}
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -100,15 +104,19 @@ export function HeaderBar() {
                     onClick={() => selectFamilyMember(member.id)}
                     className="flex items-center gap-2"
                   >
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={member.avatarUrl} alt={member.name} />
-                      <AvatarFallback style={{ backgroundColor: member.color }}>
-                        {member.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{member.name}</span>
-                    {member.role === 'Admin' && (
-                      <span className="ml-auto text-xs text-muted-foreground">Admin</span>
+                    {member && (
+                      <>
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.avatarUrl} alt={member.name || 'Member'} />
+                          <AvatarFallback style={{ backgroundColor: member.color }}>
+                            {member.name ? member.name.charAt(0) : '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{member.name || 'Unknown Member'}</span>
+                        {member.role === 'admin' && (
+                          <span className="ml-auto text-xs text-muted-foreground">Admin</span>
+                        )}
+                      </>
                     )}
                   </DropdownMenuItem>
                 ))}
