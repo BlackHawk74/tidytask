@@ -64,14 +64,14 @@ export function TaskModal({
       if (mode === "edit" && task) {
         setTitle(task.title || '')
         setDescription(task.description || '')
-        setAssignee(task.assignee || '')
+        setAssignee(task.assigned_to || '')
         setPriority(task.priority)
-        // Safely parse the date with error handling
-        try {
-          setDate(task.deadline ? new Date(task.deadline) : new Date())
-        } catch (error) {
-          console.error('Error parsing date:', error)
-          setDate(new Date())
+        // Ensure task.due_date is a valid date string before parsing
+        if (task.due_date && !isNaN(new Date(task.due_date).getTime())) {
+          setDate(new Date(task.due_date))
+        } else if (task.due_date) { // If it exists but is not valid, log an error
+          console.warn(`Invalid date format for task.due_date: ${task.due_date}`);
+          setDate(new Date()); // Fallback to current date
         }
         setTempId(task.id)
         setTempSubtasks(task.subtasks || [])
@@ -92,46 +92,39 @@ export function TaskModal({
     if (!title.trim() || !assignee) return
     
     // Ensure date is valid before converting to ISO string
-    let formattedDate: string;
+    let formattedDate: string | undefined;
     try {
-      // Make sure we have a valid date object
       if (date && !isNaN(date.getTime())) {
         formattedDate = date.toISOString();
       } else {
-        // Fallback to current date if the date is invalid
-        console.warn('Invalid date detected, using current date instead');
-        formattedDate = new Date().toISOString();
+        // If date is not set or invalid, formattedDate will remain undefined
+        // The Task type allows due_date to be optional
+        formattedDate = undefined; 
       }
     } catch (error) {
       console.error('Error formatting date:', error);
-      formattedDate = new Date().toISOString();
+      formattedDate = undefined;
     }
     
-    if (mode === "edit" && task) {
-      updateTask(task.id, {
-        title,
-        description,
-        assignee,
-        priority,
-        deadline: formattedDate, // Use deadline
-      })
-    } else {
-      // Create a new task with required fields for database schema
+    if (mode === "create") {
       addTask({
-        title,
-        description,
-        assignee,
+        title: title.trim(),
+        description: description.trim() || null,
         priority,
-        deadline: formattedDate, // Use deadline instead of due_date
+        due_date: formattedDate,
+        assigned_to: assignee || null, // assignee state holds the user_id
+        subtasks: tempSubtasks, 
+      });
+    } else if (task) { // mode === "edit"
+      updateTask(task.id, {
+        title: title.trim(),
+        description: description.trim() || null,
+        priority,
+        due_date: formattedDate,
+        assigned_to: assignee || null,
         subtasks: tempSubtasks,
-        completed: false,
-        status: 'Upcoming',
-        family_id: 'default', // Will be assigned by the store
-        created_by: 'current_user', // Will be assigned by the store
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        assigned_to: assignee // Use assigned_to to match database schema
-      })
+        // updated_at will be handled by the store's updateTask function
+      });
     }
     
     onOpenChange(false)
@@ -202,11 +195,11 @@ export function TaskModal({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="deadline">Deadline</Label>
+            <Label htmlFor="due_date">Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  id="deadline"
+                  id="due_date"
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",

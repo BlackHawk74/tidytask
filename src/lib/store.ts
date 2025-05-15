@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, FamilyMember, Notification, Subtask, Task, Role } from './types';
+import { AppState, FamilyMember, Notification, Subtask, Task, Role, Priority, NewTaskData } from './types';
 import { supabase } from './supabase';
 
 export const useStore = create<AppState>()(persist(
@@ -12,36 +12,63 @@ export const useStore = create<AppState>()(persist(
   selectedFamilyMember: null,
 
   // Task Actions
-  addTask: async (task: Omit<Task, 'id' | 'created_at'>) => {
-    const { familyMembers } = get(); // Get current family members for assignee check
+  addTask: async (taskData: NewTaskData) => {
+    const { familyMembers } = get();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error("User not authenticated. Cannot add task.");
+      // Consider throwing an error or showing a toast to the user
+      return;
+    }
+
+    const currentUserFamilyMember = familyMembers.find(fm => fm.user_id === user.id);
+    const taskFamilyId = currentUserFamilyMember?.family_id;
+
+    if (!taskFamilyId) {
+      console.error("Could not determine family_id for the current user. Cannot add task.");
+      // This could happen if familyMembers isn't populated or user isn't in a family (UI should ideally prevent this)
+      return;
+    }
+
     const newTask: Task = {
-      ...task,
-      id: uuidv4(), // Generate ID client-side
+      ...taskData,
+      id: uuidv4(),
+      family_id: taskFamilyId,
+      created_by: user.id,
       created_at: new Date().toISOString(),
-      // Ensure family_id is included - might need to get it from state if not passed in
-      family_id: task.family_id || familyMembers.find(fm => fm.user_id === task.assignee)?.family_id || '', // Attempt to infer family_id
+      updated_at: new Date().toISOString(),
+      completed: false, // Default value
+      status: 'Upcoming', // Default value
+      // subtasks from taskData will be part of newTask for optimistic update
     };
 
     // Optimistically update local state first
     set(state => ({ tasks: [...state.tasks, newTask] }));
 
     // Add notification locally
-    const assignee = familyMembers.find(member => member.id === task.assignee);
-    if (assignee) {
-      get().addNotification({ // Assuming addNotification remains sync for now
-        message: `New task assigned to ${assignee.name}: ${task.title}`,
+    const assignee = familyMembers.find(member => member.user_id === newTask.assigned_to);
+    if (assignee && assignee.user_id !== user.id) { // Notify if assigned to someone else
+      get().addNotification({ 
+        message: `New task assigned to ${assignee.name}: ${newTask.title}`,
         related_task_id: newTask.id,
-        user_id: assignee.user_id,
-        created_at: new Date().toISOString()
+        user_id: assignee.user_id, // The user_id of the person being notified
+        type: 'task_assigned',
+        created_at: new Date().toISOString(),
       });
     }
-    
+
     // Then, try to save to Supabase
     try {
-      // We need the full Task object for Supabase, ensure required fields are present
+      const { subtasks, ...taskToSave } = newTask; // Exclude subtasks from the object sent to Supabase
+
+      // Diagnostic logging
+      console.log("[addTask store] User ID for created_by:", user?.id);
+      console.log("[addTask store] Task object being saved (taskToSave):", JSON.stringify(taskToSave, null, 2));
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert(newTask)
+        .insert(taskToSave) // Save the task without subtasks
         .select(); // Select to confirm insertion
         
       if (error) throw error;
@@ -64,9 +91,10 @@ export const useStore = create<AppState>()(persist(
 
     // Then, update Supabase
     try {
+      const { subtasks, ...taskDataToUpdate } = updatedTaskData as Partial<Task>; // Exclude subtasks if present, and cast to ensure type alignment
       const { data, error } = await supabase
         .from('tasks')
-        .update({ ...updatedTaskData, updated_at: new Date().toISOString() })
+        .update({ ...taskDataToUpdate, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select();
         
@@ -104,12 +132,12 @@ export const useStore = create<AppState>()(persist(
   completeTask: (id) => set(state => {
     const task = state.tasks.find(t => t.id === id);
     if (task) {
-      const assignee = state.familyMembers.find(member => member.id === task.assignee);
-      if (assignee) {
+      const assigneeMember = state.familyMembers.find(member => member.user_id === task.assigned_to);
+      if (assigneeMember) {
         state.addNotification({
-          message: `${assignee.name} completed: ${task.title}`,
+          message: `${assigneeMember.name} completed: ${task.title}`,
           related_task_id: id,
-          user_id: assignee.user_id,
+          user_id: assigneeMember.user_id,
           created_at: new Date().toISOString()
         });
       }

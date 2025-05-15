@@ -23,7 +23,7 @@ export function TaskCard({ task, isCalendarView = false, isDragging = false }: T
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { familyMembers, completeTask } = useStore()
   
-  const assignee = familyMembers.find(member => member.id === task.assignee)
+  const assigneeUser = familyMembers.find(member => member.user_id === task.assigned_to)
   const progress = calculateTaskProgress(task)
   
   return (
@@ -41,17 +41,20 @@ export function TaskCard({ task, isCalendarView = false, isDragging = false }: T
           <CardHeader className="p-4 pb-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
-                <h3 className="font-medium line-clamp-1">{task.title}</h3>
+                <h3 className="font-semibold">{task.title}</h3>
+                {assigneeUser && (
+                  <p className="text-xs text-muted-foreground">Assigned to: {assigneeUser.name}</p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
                   {task.description}
                 </p>
               </div>
               
-              {assignee && (
+              {assigneeUser && (
                 <Avatar className="h-6 w-6 flex-shrink-0">
-                  <AvatarImage src={assignee.avatarUrl} alt={assignee.name || 'User'} />
-                  <AvatarFallback style={{ backgroundColor: assignee.color }}>
-                    {assignee.name?.charAt(0) || 'U'}
+                  <AvatarImage src={assigneeUser.avatarUrl} alt={assigneeUser.name || 'User'} />
+                  <AvatarFallback style={{ backgroundColor: assigneeUser.color }}>
+                    {assigneeUser.name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
               )}

@@ -49,17 +49,13 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   priority: Priority;
-  deadline?: string; // ISO 8601 date string (optional)
+  due_date?: string; // ISO 8601 date string (optional)
   created_by: string;
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
   completed: boolean | null;
   subtasks?: Subtask[];
-  
-  // UI properties (for compatibility with existing components)
-  assignee?: string; // Alias for assigned_to
-  createdAt?: string; // Alias for created_at
 }
 
 export interface Notification {
@@ -76,6 +72,16 @@ export interface Notification {
   taskId?: string; // Alias for related_task_id
 }
 
+// Moved from store.ts, represents data for creating a new task from the modal
+export interface NewTaskData {
+  title: string;
+  description: string | null;
+  priority: Priority;
+  due_date?: string; // ISO 8601 date string (optional)
+  assigned_to: string | null;
+  subtasks?: Subtask[]; // For local state, will be stripped for DB by the store
+}
+
 export interface AppState {
   tasks: Task[];
   familyMembers: FamilyMember[];
@@ -83,7 +89,7 @@ export interface AppState {
   selectedFamilyMember: string | null;
   
   // Task Actions
-  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
+  addTask: (taskData: NewTaskData) => Promise<void>;
   updateTask: (id: string, task: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   completeTask: (id: string) => void;

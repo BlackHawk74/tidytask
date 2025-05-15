@@ -75,24 +75,27 @@ export default function AppLayout({
         // 3. Check Family Membership (Only if profile setup is complete)
         const { data: memberData, error: memberError } = await supabase
           .from('family_members')
-          .select('family_id')
+          .select('*') // Changed from 'family_id' to '*' for this check
           .eq('user_id', userId)
           .maybeSingle(); // Use maybeSingle for graceful handling of no family
 
-        if (memberError) {
-            console.error(`Error checking family status: ${memberError.message}`);
-            throw new Error(`Failed to check family status: ${memberError.message}`);
+        console.log("[AppLayout] Family membership raw memberData:", JSON.stringify(memberData, null, 2));
+
+        // Check for genuine errors first. PGRST116 with null data is treated as 'not found' for .maybeSingle()
+        if (memberError && memberError.code !== 'PGRST116') {
+            console.error(`[AppLayout] Error checking family_members table. Code: ${memberError.code}, Details: ${memberError.details}, Message: ${memberError.message}, Hint: ${memberError.hint}`);
+            throw new Error(`Failed to check family status. DB Error: ${memberError.message}`);
         }
 
-        // If profile setup is complete BUT user is not in a family
+        // If profile setup is complete BUT user is not in a family (memberData is null, and any PGRST116 error is ignored here)
         if (!memberData?.family_id) {
-          console.warn("User profile setup complete, but not in a family. Prompting for family setup.");
+          console.warn("[AppLayout] User profile setup complete, but not in a family (or memberData is null with acceptable PGRST116). Prompting for family setup.");
           setNeedsFamilySetup(true);
           setIsLoading(false);
           return; // Render the Create/Join Family screen
         }
 
-        console.log(`User belongs to family ${memberData.family_id}. Fetching app data.`);
+        console.log(`[AppLayout] User belongs to family ${memberData.family_id}. Fetching app data.`);
 
         // 4. Fetch App Data (Only if profile setup complete AND user is in a family)
         const familyId = memberData.family_id;
