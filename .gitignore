@@ -34,7 +34,7 @@ yarn-error.log*
 windsurf_deployment.yaml
 
 # documentation
-/build_docs
+
 
 # env files (can opt-in for committing if needed)
 .env*
